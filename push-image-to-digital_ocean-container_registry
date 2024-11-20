@@ -1,0 +1,10 @@
+#Authenticate with DigitalOcean
+doctl auth init  #after running this command ,it will prompt to enter digital ocean api token, then go to digital ocean and create api token ,use it for authentication
+#Log in to DigitalOcean Container Registry
+doctl registry login
+#Tag the Image
+docker tag <My-image-name>:<my-tag> registry.digitalocean.com/<My-digital_ocean_repo>/<My-image-name>:<my-tag>
+#Push the Image
+docker push registry.digitalocean.com/<My-digital_ocean_repo>/<My-image-name>:<my-tag>
+# now go to digital ocean ,then check image updated or not
+
