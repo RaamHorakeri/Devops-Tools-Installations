@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-server
+  namespace: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: argocd
+  template:
+    metadata:
+      labels:
+        app: argocd
+    spec:
+      containers:
+        - name: argocd-server
+          image: argoproj/argocd:v2.8.0
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: argocd-server-tls
+              mountPath: /app/config
+              subPath: argocd-server
+      volumes:
+        - name: argocd-server-tls
+          configMap:
+            name: argocd-server-tls
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server
+  namespace: argocd
+spec:
+  type: NodePort
+  selector:
+    app: argocd
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+      nodePort: 30001
+
+---
+apiVersion: namespace
+kind: Namespace
+metadata:
+  name: argocd
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: argocd-repo-server
+  template:
+    metadata:
+      labels:
+        app: argocd-repo-server
+    spec:
+      containers:
+        - name: argocd-repo-server
+          image: argoproj/argocd:v2.8.0
+          ports:
+            - containerPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+spec:
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  selector:
+    app: argocd-repo-server
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-dex-server
+  namespace: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: argocd-dex-server
+  template:
+    metadata:
+      labels:
+        app: argocd-dex-server
+    spec:
+      containers:
+        - name: argocd-dex-server
+          image: argoproj/argocd:v2.8.0
+          ports:
+            - containerPort: 5556
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-dex-server
+  namespace: argocd
+spec:
+  ports:
+    - protocol: TCP
+      port: 5556
+      targetPort: 5556
+  selector:
+    app: argocd-dex-server
