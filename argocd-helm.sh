@@ -35,11 +35,22 @@ kubectl wait --for=condition=ready pod -n $NAMESPACE --all --timeout=300s
 
 # Step 5: Retrieve the ArgoCD Admin Password
 echo "🔹 Retrieving the ArgoCD admin password..."
-ARGOCD_PASSWORD=$(kubectl -n $NAMESPACE get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode)
+ADMIN_PASSWORD=$(kubectl -n $NAMESPACE get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode || echo "Secret not found!")
+
+# Check if password retrieval was successful
+if [ -z "$ADMIN_PASSWORD" ] || [ "$ADMIN_PASSWORD" == "Secret not found!" ]; then
+    echo "❌ Error: Unable to retrieve ArgoCD password. Please check if the secret exists."
+    echo "Run the following command manually:"
+    echo "kubectl -n $NAMESPACE get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 --decode"
+    exit 1
+fi
 
 echo "✅ ArgoCD installation completed!"
 echo "🌐 Access ArgoCD UI at: http://$SERVER_IP:30080"
 echo "🔑 Login using:"
 echo "   Username: admin"
-echo "   Password: $ARGOCD_PASSWORD"
+echo "   Password: $ADMIN_PASSWORD"
 
+# Optional: Suggest deleting the initial secret
+echo "🚨 Security Tip: After logging in, consider deleting the initial admin secret for security:"
+echo "kubectl delete secret argocd-initial-admin-secret -n $NAMESPACE"
