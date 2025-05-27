@@ -1,6 +1,6 @@
 #!/bin/bash
 # Define the version of doctl to install
-DOCTL_VERSION="1.115.0"
+DOCTL_VERSION="1.124.0"
 
 # Download the specified version of doctl
 wget "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-amd64.tar.gz" -O "doctl-${DOCTL_VERSION}-linux-amd64.tar.gz"
