@@ -6,11 +6,11 @@ set -e
 RANCHER_NAMESPACE="cattle-system"
 CERT_MANAGER_VERSION="v1.12.2"
 RANCHER_VERSION="2.11.1"
-RANCHER_HOSTNAME="rancher.local"  # You can change this or set up local DNS
+RANCHER_HOSTNAME="rancher.local"  # Change if needed
 
 # Step 0: Check cluster access
 echo "🔍 Checking Kubernetes cluster access..."
-if ! kubectl version --short > /dev/null 2>&1; then
+if ! kubectl get nodes > /dev/null 2>&1; then
   echo "❌ kubectl is not connected to a Kubernetes cluster. Please check your kubeconfig."
   exit 1
 fi
@@ -48,11 +48,10 @@ helm install rancher rancher-latest/rancher \
 echo "⏳ Waiting for Rancher pod to be ready..."
 kubectl -n $RANCHER_NAMESPACE rollout status deploy/rancher --timeout=180s
 
-# Step 6: Reset admin password
-echo "🔐 Setting Rancher admin password..."
-RANCHER_POD=$(kubectl -n $RANCHER_NAMESPACE get pods -l app=rancher -o jsonpath="{.items[0].metadata.name}")
-NEW_PASSWORD="Admin@$(openssl rand -base64 6 | tr -dc A-Za-z0-9)"
-kubectl -n $RANCHER_NAMESPACE exec -it "$RANCHER_POD" -- reset-password <<< "$NEW_PASSWORD"
+# Step 6: Reset admin password and capture the actual value
+echo "🔐 Resetting Rancher admin password..."
+POD_NAME=$(kubectl -n $RANCHER_NAMESPACE get pods -l app=rancher -o jsonpath="{.items[0].metadata.name}")
+ACTUAL_PASSWORD=$(kubectl -n $RANCHER_NAMESPACE exec -i "$POD_NAME" -- reset-password | grep -oE '[A-Za-z0-9@_\-]{10,}')
 
 # Step 7: Get NodePort and IP
 NODE_PORT=$(kubectl -n $RANCHER_NAMESPACE get svc rancher -o jsonpath='{.spec.ports[0].nodePort}')
@@ -61,4 +60,4 @@ NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="
 echo
 echo "✅ Rancher installed successfully!"
 echo "🌐 Access URL: http://${NODE_IP}:${NODE_PORT}"
-echo "🔑 Admin password: $NEW_PASSWORD"
+echo "🔑 Admin password: $ACTUAL_PASSWORD"
