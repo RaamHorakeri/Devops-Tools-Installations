@@ -1,26 +1,31 @@
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status
 set -e
 
-echo "Installing Helm..."
+HELM_VERSION="v3.14.4"
+ARCH="amd64"
 
-# Add Helm GPG key
-curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+echo "🚀 Installing Helm ${HELM_VERSION}..."
 
-# Install required package
-sudo apt-get install apt-transport-https --yes
+# Install required packages
+sudo apt update -y
+sudo apt install -y curl tar
 
-# Add Helm repository
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+# Download Helm
+curl -fsSL https://get.helm.sh/helm-${HELM_VERSION}-linux-${ARCH}.tar.gz -o helm.tar.gz
 
-# Update package list
-sudo apt-get update
+# Extract
+tar -xzf helm.tar.gz
 
-# Install Helm
-sudo apt-get install helm -y
+# Move binary
+sudo mv linux-${ARCH}/helm /usr/local/bin/helm
 
-# Verify installation
+# Set permissions
+sudo chmod +x /usr/local/bin/helm
+
+# Cleanup
+rm -rf linux-${ARCH} helm.tar.gz
+
+# Verify
+echo "✅ Helm installed successfully"
 helm version
-
-echo "Helm installation completed successfully!"
