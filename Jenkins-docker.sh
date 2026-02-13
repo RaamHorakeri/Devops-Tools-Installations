@@ -1,19 +1,30 @@
 #!/bin/bash
 
-# Pull the latest Jenkins LTS Docker image
-docker pull jenkins/jenkins:lts
+set -e
 
-# Run Jenkins container
+JENKINS_IMAGE="jenkins/jenkins:latest"
+CONTAINER_NAME="jenkins"
+VOLUME_NAME="jenkins_home"
+
+echo "Stopping existing Jenkins container (if any)..."
+docker stop $CONTAINER_NAME 2>/dev/null || true
+docker rm $CONTAINER_NAME 2>/dev/null || true
+
+echo "Pulling latest Jenkins (NON-LTS / weekly)..."
+docker pull $JENKINS_IMAGE
+
+echo "Starting Jenkins with latest version..."
 docker run -d \
-  --name jenkins \
+  --name $CONTAINER_NAME \
   -p 8080:8080 \
   -p 50000:50000 \
-  -v jenkins_home:/var/jenkins_home \
-  jenkins/jenkins:lts
+  -v $VOLUME_NAME:/var/jenkins_home \
+  --restart unless-stopped \
+  $JENKINS_IMAGE
 
-# Display initial Jenkins admin password
 echo "Waiting for Jenkins to start..."
-sleep 20  # Wait a moment for Jenkins to initialize
+sleep 30
 
-echo "Initial Jenkins Admin Password:"
-docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+echo "Initial Jenkins Admin Password (only first time):"
+docker exec $CONTAINER_NAME cat /var/jenkins_home/secrets/initialAdminPassword 2>/dev/null || \
+echo "Jenkins already initialized."
